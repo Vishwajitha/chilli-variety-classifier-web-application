@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classification Result</title>
+    <style>
+        /* Optional CSS to improve the appearance */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;                       /* Reset margin to avoid scrolling issues */
+            display: flex;                  
+            flex-direction: column;         
+            align-items: center;            
+            justify-content: flex-start;     /* Start alignment to allow for scrolling */
+            height: 100vh;                 
+            text-align: center;             
+            background-color: #f9f9f9;     
+            overflow: hidden;                /* Prevent body overflow */
+        }
+        .container {
+            max-height: 100vh;              /* Limit container height to the viewport */
+            overflow-y: auto;               /* Allow vertical scrolling */
+            width: 100%;                    
+            display: flex;                  /* Use flexbox for centering */
+            flex-direction: column;         /* Align items in a column */
+            align-items: center;            /* Center items horizontally */
+        }
+        img {
+            max-width: auto;              
+            height: 500px;                  
+            margin-top: 20px;    
+            object-fit: cover;           
+        }
+        .report {
+            margin-top: 20px;              
+            padding: 20px;                 
+            border: 1px solid #e9ecec;        
+            border-radius: 10px;           
+            background-color: #cacdce;        
+            width: 80%;                    
+            max-width: 1000px;               /* Limit max width for better readability */
+            box-shadow: 0 4px 8px rgba(211, 231, 61, 0.1);
+            text-align: center;              /* Center text in the report */
+        }
+        .info {
+            margin-top: 10px;              
+            text-align: left;            /* Justify the text */
+            line-height: 1.6;               /* Increase line height for spacing */
+        }
+        h1, h2, h3 {
+            color: #333;                   /* Darker color for headings */
+        }
+        a {
+            margin-top: 20px;              
+            text-decoration: none;          
+            color: #007BFF;                
+            font-weight: bold;              
+        }
+        a:hover {
+            text-decoration: underline;     
+        }
+    </style>
+</head>
+<body>
+    <h1>Classification Result</h1>
+    <h2>Predicted Variety: {{ variety }}</h2>
+    
+    <div class="container">              <!-- Added container for scrollable area -->
+        <img src="{{ url_for('static', filename=image) }}" alt="Chili Image">
+        
+        <div class="report">
+            <h3>Information:</h3>
+            <p class="info">{{ info|safe }}</p>
+        </div>
+    </div>
+    
+    <a href="{{ url_for('index') }}">Classify Another</a>
+</body>
+</html>

@@ -1,0 +1,115 @@
+import os
+import random
+import matplotlib.pyplot as plt
+import cv2
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+import imgaug.augmenters as iaa
+
+data_dir = 'C:/Users/vishw/OneDrive/Documents/chili classification web application/Uploads'
+categories = ['jalapeno', 'bhut_jolokia', 'kashmiri_chillie','cayenne_mirchi','guntur_sannam']
+
+def load_and_display_images(data_dir, categories, num_images=3):
+    for category in categories:
+        folder_path = os.path.join(data_dir, category)
+        images = os.listdir(folder_path)
+        random.shuffle(images)  # Shuffle the list of images
+        images = images[:num_images]
+        
+        plt.figure(figsize=(15, 5))
+        plt.suptitle(f'Variety: {category}', fontsize=16)
+        
+        for i, image_name in enumerate(images):
+            image_path = os.path.join(folder_path, image_name)
+            image = cv2.imread(image_path)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            
+            plt.subplot(1, num_images, i + 1)
+            plt.imshow(image)
+            plt.title(f'{category} {i+1}')
+            plt.axis('off')
+        
+        plt.show()
+
+# Load and display images
+load_and_display_images(data_dir, categories)
+
+img_size = (150, 150)
+
+# Function to preprocess images
+def preprocess_images(data_dir, categories, img_size):
+    X = []
+    y = []
+    
+    for category in categories:
+        folder_path = os.path.join(data_dir, category)
+        label = categories.index(category)
+        
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+            image = cv2.imread(file_path)
+            if image is not None:
+                image = cv2.resize(image, img_size)
+                image = image / 255.0  # Normalize pixel values
+                X.append(image)
+                y.append(label)
+            else:
+                print(f"Warning: Unable to load image {file_path}")
+    
+    X = np.array(X, dtype=np.float32)  # Ensure the data type is float32
+    y = np.array(y)
+    return X, y
+
+# Preprocess images
+X, y = preprocess_images(data_dir, categories, img_size)
+print(f'Processed {len(X)} images.')
+
+seq = iaa.Sequential([
+    iaa.Fliplr(0.5),  # horizontal flips
+    iaa.Affine(rotate=(-20, 20)),  # rotation
+    iaa.Multiply((0.8, 1.2))  # change brightness
+])
+
+# Function to augment images
+def augment_images(X, y, num_augmented=5):
+    X_augmented = []
+    y_augmented = []
+    
+    for i in range(len(X)):
+        for _ in range(num_augmented):
+            image_aug = seq(image=(X[i] * 255).astype(np.uint8))  # Convert to uint8 before augmentation
+            image_aug = image_aug / 255.0  # Normalize back to [0, 1]
+            X_augmented.append(image_aug)
+            y_augmented.append(y[i])
+    
+    X_augmented = np.array(X_augmented, dtype=np.float32)
+    y_augmented = np.array(y_augmented)
+    return X_augmented, y_augmented
+
+# Augment images
+X_augmented, y_augmented = augment_images(X, y)
+print(f'Augmented {len(X_augmented)} images.')
+
+
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X_augmented, y_augmented, test_size=0.2, random_state=42)
+
+# Flatten the image data (needed for SVM and some other models)
+X_train_flat = X_train.reshape(X_train.shape[0], -1)
+X_test_flat = X_test.reshape(X_test.shape[0], -1)
+
+
+# Train a Random Forest Classifier model
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X_train_flat, y_train)
+
+# Predict using the Random Forest model
+y_pred_rf = rf_model.predict(X_test_flat)
+
+# Calculate accuracy for Random Forest
+accuracy_rf = accuracy_score(y_test, y_pred_rf)
+print(f'Random Forest Model Accuracy: {accuracy_rf * 100:.2f}%')
